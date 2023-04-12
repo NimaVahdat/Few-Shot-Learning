@@ -42,11 +42,11 @@ if __name__ == '__main__':
     ensure_path(args.save_path)  
 
     if args.dataset == 'MiniImageNet':
-        from feat.dataloader.mini_imagenet import MiniImageNet as Dataset
+        from utils.dataloader.mini_imagenet import MiniImageNet as Dataset
     elif args.dataset == 'CUB':
-        from feat.dataloader.cub import CUB as Dataset
+        from utils.dataloader.cub import CUB as Dataset
     elif args.dataset == 'TieredImageNet':
-        from feat.dataloader.tiered_imagenet import tieredImageNet as Dataset       
+        from utils.dataloader.tiered_imagenet import tieredImageNet as Dataset       
     else:
         raise ValueError('Non-supported Dataset.')
 

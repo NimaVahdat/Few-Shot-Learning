@@ -204,3 +204,42 @@ if __name__ == '__main__':
 
         print('ETA:{}/{}'.format(timer.measure(), timer.measure(epoch / args.max_epoch)))
     writer.close()
+
+    
+    
+    
+    # Test
+    trlog = torch.load(osp.join(args.save_path, 'trlog'))
+    test_set = Dataset('test', args)
+    sampler = CategoriesSampler(test_set.label, 50, args.way, args.shot + args.query)
+    loader = DataLoader(test_set, batch_sampler=sampler, num_workers=8, pin_memory=True)
+    test_acc_record = np.zeros((50,))
+
+    model.load_state_dict(torch.load(osp.join(args.save_path, 'max_acc' + '.pth'))['params'])
+    model.eval()
+
+    ave_acc = Averager()
+    label = torch.arange(args.way).repeat(args.query)
+    if torch.cuda.is_available():
+        label = label.type(torch.cuda.LongTensor)
+    else:
+        label = label.type(torch.LongTensor)
+        
+    with torch.no_grad():
+        for i, batch in enumerate(loader, 1):
+            if torch.cuda.is_available():
+                data, _ = [_.cuda() for _ in batch]
+            else:
+                data = batch[0]
+            k = args.way * args.shot
+            data_shot, data_query = data[:k], data[k:]
+    
+            logits = model(data_shot, data_query)
+            acc = count_acc(logits, label)
+            ave_acc.add(acc)
+            test_acc_record[i-1] = acc
+            print('batch {}: {:.2f}({:.2f})'.format(i, ave_acc.item() * 100, acc * 100))
+        
+    m, pm = compute_confidence_interval(test_acc_record)
+    print('Val Best Acc {:.4f}, Test Acc {:.4f}'.format(trlog['max_acc'], ave_acc.item()))
+    print('Test Acc {:.4f} + {:.4f}'.format(m, pm))

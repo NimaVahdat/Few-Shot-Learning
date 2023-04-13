@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from utils.dataloader.samplers import CategoriesSampler
 from utils.models.protonet import ProtoNet
-from utils.utils import pprint, set_gpu, ensure_path, Averager, Timer, count_acc, compute_confidence_interval
+from utils.utils import set_device, ensure_directory, Averager, Timer, compute_accuracy, compute_confidence_interval
 from tensorboardX import SummaryWriter
 
 
@@ -23,30 +23,31 @@ if __name__ == '__main__':
     parser.add_argument('--temperature', type=float, default=1)
     parser.add_argument('--model_type', type=str, default='ConvNet', choices=['ConvNet', 'ResNet', 'AmdimNet'])
     parser.add_argument('--dataset', type=str, default='MiniImageNet', choices=['MiniImageNet', 'CUB', 'TieredImageNet'])
-    parser.add_argument('--init_weights', type=str, default=None)
-    parser.add_argument('--save_path', type=str, default=None)
+    parser.add_argument('--init_weights', type=str, default='./')
+    parser.add_argument('--save_path', type=str, default='./')
     parser.add_argument('--gpu', default='0')
     parser.add_argument('--ndf', type=int, default=256)
     parser.add_argument('--rkhs', type=int, default=2048)
     parser.add_argument('--nd', type=int, default=10)
 
     args = parser.parse_args()
-    pprint(vars(args))
+    print(vars(args))
 
-    set_gpu(args.gpu)
+    set_device(args.gpu)
     save_path1 = '-'.join([args.dataset, args.model_type, 'ProtoNet'])
     save_path2 = '_'.join([str(args.shot), str(args.query), str(args.way), 
                                str(args.step_size), str(args.gamma), str(args.lr), str(args.temperature)])
     args.save_path = join_path(args.save_path, join_path(save_path1, save_path2))
-    ensure_path(save_path1, remove=False)
-    ensure_path(args.save_path)  
+    ensure_directory(save_path1, remove_existing=False)
+    ensure_directory(args.save_path)  
 
     if args.dataset == 'MiniImageNet':
-        from utils.dataloader.mini_imagenet import MiniImageNet as Dataset
+        from utils.dataloader.miniImageNet import MiniImageNet as Dataset
     elif args.dataset == 'CUB':
+
         from utils.dataloader.cub import CUB as Dataset
     elif args.dataset == 'TieredImageNet':
-        from utils.dataloader.tiered_imagenet import tieredImageNet as Dataset       
+        from utils.dataloader.tieredImageNet import tieredImageNet as Dataset       
     else:
         raise ValueError('Non-supported Dataset.')
 
@@ -100,7 +101,7 @@ if __name__ == '__main__':
         model = model.cuda()
     
     def save_model(name):
-        torch.save(dict(params=model.state_dict()), osp.join(args.save_path, name + '.pth'))
+        torch.save(dict(params=model.state_dict()), join_path(args.save_path, name + '.pth'))
     
     trlog = {}
     trlog['args'] = vars(args)
@@ -139,7 +140,7 @@ if __name__ == '__main__':
             logits = model(data_shot, data_query)
             print(logits.size())
             loss = F.cross_entropy(logits, label)
-            acc = count_acc(logits, label)
+            acc = compute_accuracy(logits, label)
             writer.add_scalar('data/loss', float(loss), global_count)
             writer.add_scalar('data/acc', float(acc), global_count)
             print('epoch {}, train {}/{}, loss={:.4f} acc={:.4f}'
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     
                 logits = model(data_shot, data_query)
                 loss = F.cross_entropy(logits, label)
-                acc = count_acc(logits, label)    
+                acc = compute_accuracy(logits, label)    
                 vl.add(loss.item())
                 va.add(acc)
 
@@ -198,7 +199,7 @@ if __name__ == '__main__':
         trlog['val_loss'].append(vl)
         trlog['val_acc'].append(va)
 
-        torch.save(trlog, osp.join(args.save_path, 'trlog'))
+        torch.save(trlog, join_path(args.save_path, 'trlog'))
 
         save_model('epoch-last')
 
@@ -209,13 +210,13 @@ if __name__ == '__main__':
     
     
     # Test
-    trlog = torch.load(osp.join(args.save_path, 'trlog'))
+    trlog = torch.load(join_path(args.save_path, 'trlog'))
     test_set = Dataset('test', args)
     sampler = CategoriesSampler(test_set.label, 50, args.way, args.shot + args.query)
     loader = DataLoader(test_set, batch_sampler=sampler, num_workers=8, pin_memory=True)
     test_acc_record = np.zeros((50,))
 
-    model.load_state_dict(torch.load(osp.join(args.save_path, 'max_acc' + '.pth'))['params'])
+    model.load_state_dict(torch.load(join_path(args.save_path, 'max_acc' + '.pth'))['params'])
     model.eval()
 
     ave_acc = Averager()
@@ -235,7 +236,7 @@ if __name__ == '__main__':
             data_shot, data_query = data[:k], data[k:]
     
             logits = model(data_shot, data_query)
-            acc = count_acc(logits, label)
+            acc = compute_accuracy(logits, label)
             ave_acc.add(acc)
             test_acc_record[i-1] = acc
             print('batch {}: {:.2f}({:.2f})'.format(i, ave_acc.item() * 100, acc * 100))

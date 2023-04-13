@@ -1,3 +1,6 @@
+import os
+import shutil
+import time
 import torch
 import numpy as np
 
@@ -75,13 +78,6 @@ class Timer():
         return '{}s'.format(x)
 
 
-_utils_pp = pprint.PrettyPrinter()
-def pretty_print(x):
-    """
-    Pretty prints the input x
-    :param x: the object to be pretty printed
-    """
-    _utils_pp.pprint(x)
 
 
 def compute_confidence_interval(data):

@@ -10,6 +10,7 @@ Required packages:
 ## Dataset
 Once you have downloaded the dataset, you will need to create a new folder named "images" within the "minimagenet" or "retail" folder, and place all of the images into this folder. The data loader that we have provided will automatically read the images from the "images" folder.
 
+
 ## Training
 Example for traing the model
 ```bash

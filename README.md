@@ -13,7 +13,7 @@ Once you have downloaded the dataset, you will need to create a new folder named
 ## Training
 Example for traing the model
 ```bash
-python train_protonet.py --lr 0.0001 --temperature 64   \
+python train.py --lr 0.0001 --temperature 64   \
 --max_epoch 100 --model_type AmdimNet --dataset MiniImageNet \
 --init_weights ./miniimagenet.pth  \
 --save_path ./MINI_1shot_5way/ \

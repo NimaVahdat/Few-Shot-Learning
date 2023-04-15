@@ -29,7 +29,7 @@ The results on the MiniImageNet and TieredImageNet datasets are shown below:
 | BILSTM |	63.04 |	80.63 |
 | DEEPSETS |	64.24 |	80.51 |
 | GCN |	63.93 |	81.65 |
-| FEAT |	66.08 |	81.95 |
+| FEAT |	**66.08** |	**81.95** |
 
 ## TieredImageNet
 | Model | 1-Shot 5-Way	| 5-Shot 5-Way |
@@ -38,7 +38,7 @@ The results on the MiniImageNet and TieredImageNet datasets are shown below:
 | BILSTM |	67.84 |	83.53 |
 | DEEPSETS |	68.89 |	84.86 |
 | GCN	| 66.20 |	84.64 |
-| FEAT |	70.23 |	84.37 |
+| FEAT |	**70.23** |	**84.37** |
 
 ### References
    Ye, Han-Jia, et al. "Few-shot learning via embedding adaptation with set-to-set functions." Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2020.
